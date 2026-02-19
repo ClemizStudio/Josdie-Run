@@ -1,242 +1,231 @@
-[index.html](https://github.com/user-attachments/files/25400048/index.html)
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Josdie Run | By Avril Ola</title>
+    <title>Josdie Run | Clemiz Studio</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        /* FORCE LE PLEIN ÉCRAN ET SUPPRIME LES MARGES GITHUB */
-        :root { --primary: #00ff88; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: 'Arial Black', sans-serif; color: #fff; }
         
-        html, body { 
-            width: 100% !important; 
-            height: 100% !important; 
-            overflow: hidden !important;
-            background: #000 !important;
-            position: fixed;
-            touch-action: none;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        /* L'ESPACE DE JEU DOIT PRENDRE TOUTE LA PLACE */
-        #game-container { 
-            position: absolute;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            display: none;
-            z-index: 5;
-        }
-
-        #canvas { display: block; width: 100%; height: 100%; }
-
-        /* INTERFACE CENTRÉE */
         #overlay, #death-screen { 
-            position: fixed; inset: 0; z-index: 100; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            background: rgba(0,0,0,0.9); padding: 20px;
+            position: absolute; inset: 0; z-index: 100; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
         }
 
         .box { 
-            background: #111; padding: 30px; border-radius: 25px; 
-            border: 1px solid #333; width: 90%; max-width: 400px; 
-            box-shadow: 0 0 50px rgba(0,255,136,0.15);
-            text-align: center;
+            background: rgba(26, 26, 26, 0.9); padding: 35px; border-radius: 40px; border: 4px solid #00ff88; 
+            width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 60px rgba(0,255,136,0.3);
         }
 
-        h1 { font-size: 2.2rem; color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: -1px; }
+        h1 { font-size: 2.5rem; color: #00ff88; text-shadow: 3px 3px #000; }
+        .studio { font-size: 0.8rem; color: #aaa; margin-bottom: 25px; letter-spacing: 3px; }
         
-        .grid-char { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-        .char-opt { 
-            background: #222; font-size: 1.8rem; padding: 12px; border-radius: 15px; 
-            cursor: pointer; border: 2px solid transparent; transition: 0.2s;
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .opt { 
+            background: #333; font-size: 2.2rem; padding: 12px; border-radius: 20px; 
+            cursor: pointer; border: 3px solid transparent; transition: 0.2s;
         }
-        .char-opt.active { border-color: var(--primary); background: #2a2a2a; transform: scale(1.1); }
+        .opt.active { border-color: #00ff88; background: #444; transform: scale(1.1); box-shadow: 0 0 20px #00ff88; }
         
-        input { 
-            width: 100%; padding: 15px; background: #000; border: 1px solid #444; 
-            color: #fff; border-radius: 50px; margin-bottom: 20px; 
-            text-align: center; font-size: 1.1rem; outline: none;
-        }
+        input { width: 100%; padding: 18px; background: #fff; border: none; color: #000; border-radius: 50px; margin-bottom: 20px; text-align: center; font-size: 1.3rem; font-weight: 900; }
 
         .btn { 
-            background: var(--primary); color: #000; padding: 16px; 
-            border: none; border-radius: 50px; font-weight: 900; 
-            cursor: pointer; width: 100%; text-transform: uppercase; font-size: 1rem;
+            background: #444; color: #fff; padding: 18px; border: none; border-radius: 50px; 
+            font-weight: 900; cursor: pointer; width: 100%; text-transform: uppercase; 
+            font-size: 1.1rem; margin-bottom: 12px; border: 3px solid transparent; transition: 0.2s;
         }
+        .btn.selected, .btn:hover { background: #00ff88; color: #000; border-color: #fff; box-shadow: 0 0 20px rgba(0,255,136,0.5); transform: scale(1.05); }
 
-        #ui { position: absolute; top: 30px; width: 100%; text-align: center; pointer-events: none; z-index: 50; }
-        #chrono { font-size: clamp(2.5rem, 10vw, 4rem); font-weight: 900; font-family: monospace; }
-        #glide-ui { width: 150px; height: 8px; background: rgba(0,0,0,0.5); margin: 10px auto; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
-        #glide-bar { width: 100%; height: 100%; background: var(--primary); }
-
-        footer { position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 0.7rem; opacity: 0.4; z-index: 10; }
+        #ui { position: absolute; top: 40px; width: 100%; text-align: center; pointer-events: none; z-index: 50; }
+        #chrono { font-size: 4rem; font-weight: 900; text-shadow: 4px 4px 0 #000; }
+        
+        canvas { display: block; width: 100%; height: 100%; }
+        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 0.8rem; opacity: 0.6; }
     </style>
 </head>
 <body>
-
-    <div id="overlay">
-        <div class="box">
-            <h1>JOSDIE <span style="color:#fff">RUN</span></h1>
-            <p style="opacity:0.5; font-size: 0.8rem; margin: 5px 0 20px;">BY AVRIL OLA</p>
-            <div class="grid-char">
-                <div class="char-opt active" onclick="setChar('🦁','🤠','#f4a460','#8b4513','savannah')">🦁</div>
-                <div class="char-opt" onclick="setChar('🦊','🐺','#1a1a2e','#050505','forest')">🦊</div>
-                <div class="char-opt" onclick="setChar('🐼','🐯','#e0e0e0','#a0a0a0','snow')">🐼</div>
-                <div class="char-opt" onclick="setChar('🐸','🐍','#2e8b57','#1a3a2a','marsh')">🐸</div>
+    <div id="game-wrap">
+        <div id="overlay">
+            <div class="box">
+                <h1>JOSDIE RUN</h1>
+                <p class="studio">BY CLEMIZ STUDIO</p>
+                <div class="grid" id="charGrid">
+                    <div class="opt active" onclick="selectChar(0)">🦁</div>
+                    <div class="opt" onclick="selectChar(1)">🦊</div>
+                    <div class="opt" onclick="selectChar(2)">🐼</div>
+                    <div class="opt" onclick="selectChar(3)">🐸</div>
+                </div>
+                <input type="text" id="nick" placeholder="TON PSEUDO" maxlength="10">
+                <button class="btn selected" onclick="startApp()">JOUER</button>
             </div>
-            <input type="text" id="nick" placeholder="PSEUDO" autofocus onkeydown="if(event.key === 'Enter') startApp()">
-            <button class="btn" onclick="startApp()">ENTRER DANS L'ARÈNE</button>
         </div>
-    </div>
 
-    <div id="death-screen" style="display:none;">
-        <div class="box">
-            <h1 style="color:#fff;">DÉVORÉ !</h1>
-            <p id="death-msg" style="margin: 20px 0; font-size: 1.1rem;"></p>
-            <button class="btn" onclick="resetGame()">RÉESSAYER</button>
-            <button class="btn" style="background:#444; color:#fff; margin-top:10px;" onclick="location.reload()">MENU</button>
+        <div id="death-screen" style="display:none;">
+            <div class="box">
+                <h1 style="color:#ff3e3e">DOMMAGE !</h1>
+                <p id="msg" style="margin: 20px 0; font-size: 1.4rem; font-weight: bold;"></p>
+                <button class="btn selected" id="btn-retry" onclick="resetGame()">RÉESSAYER</button>
+                <button class="btn" id="btn-menu" onclick="goBackToMenu()">MENU</button>
+            </div>
         </div>
-    </div>
 
-    <div id="game-container">
-        <div id="ui">
-            <div id="chrono">00:00:00</div>
-            <div id="glide-ui"><div id="glide-bar"></div></div>
-        </div>
+        <div id="ui"><div id="chrono">00:00:00</div></div>
         <canvas id="canvas"></canvas>
+        <footer>© 2026 - By Clemiz Studio</footer>
     </div>
-
-    <footer>© 2026 - By Avril Ola - Tous droits réservés</footer>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
         const nickInput = document.getElementById('nick');
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        let musicInterval;
+        const characters = [
+            {c:'🦁', p:'🤠', sky:'#FF4E50', ground:'#8B4513', decor:'#FC913A', note: 261}, // Savane
+            {c:'🦊', p:'🐺', sky:'#1A1A2E', ground:'#0F0C29', decor:'#302B63', note: 293}, // Forêt
+            {c:'🐼', p:'🐯', sky:'#E0E0E0', ground:'#757F9A', decor:'#D7DDE8', note: 329}, // Neige
+            {c:'🐸', p:'🐍', sky:'#11998E', ground:'#1A3A2A', decor:'#38EF7D', note: 349}  // Jungle
+        ];
 
-        let char = '🦁', pred = '🤠', sky = '#f4a460', ground = '#8b4513', biome = 'savannah';
-        let isRunning = false, isPressing = false, playerY = 0, velocityY = 0, jumpCount = 0, glideEnergy = 100;
-        let obstacles = [], backgroundElements = [];
-        let speed = 0, startTime = 0, nextObs = 0, lastTime = 0;
-        let scale = 1, groundY = 0;
+        let charIndex = 0, isRunning = false, playerY = 0, velocityY = 0, jumpCount = 0, menuSel = 0;
+        let obs = [], decorItems = [], speed = 0, startTime = 0, nextObs = 0, lastTime = 0, scale = 1, groundY = 0;
+
+        function playSound(freq, vol=0.1, type='square') {
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function startMusic() {
+            clearInterval(musicInterval);
+            let step = 0;
+            musicInterval = setInterval(() => {
+                if (!isRunning) return;
+                const n = characters[charIndex].note;
+                if (step % 4 === 0) playSound(n/2, 0.15, 'sine'); // Basse
+                if (step % 8 === 2) playSound(n, 0.05, 'square'); // Mélodie
+                step++;
+            }, 150);
+        }
 
         function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            groundY = canvas.height * 0.8;
-            scale = Math.min(canvas.width, canvas.height) / 450; 
-            if (!isRunning) playerY = groundY - (55 * scale);
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            groundY = canvas.height * 0.85; scale = Math.min(canvas.width, canvas.height) / 450;
         }
-        window.addEventListener('resize', resize);
-        resize();
+        window.addEventListener('resize', resize); resize();
 
-        function setChar(c, p, s, g, b) {
-            char = c; pred = p; sky = s; ground = g; biome = b;
-            document.querySelectorAll('.char-opt').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        }
-
-        function startApp() {
-            if(!nickInput.value.trim()) return alert("Pseudo !");
-            document.getElementById('overlay').style.display = "none";
-            document.getElementById('game-container').style.display = "block";
-            resetGame();
+        function selectChar(idx) {
+            charIndex = (idx + 4) % 4;
+            document.querySelectorAll('.opt').forEach((el, i) => el.classList.toggle('active', i === charIndex));
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            playSound(characters[charIndex].note);
         }
 
         function resetGame() {
-            document.getElementById('death-screen').style.display = "none";
-            obstacles = []; backgroundElements = [];
-            isRunning = true; velocityY = 0; jumpCount = 0; glideEnergy = 100;
-            speed = canvas.width / 130; 
-            startTime = performance.now(); lastTime = performance.now();
-            requestAnimationFrame(update);
-        }
-
-        function spawnBackground(x = canvas.width) {
-            const biomes = {'savannah':['🌵','🏜️','☀️'],'forest':['🌲','🌲','🌑'],'snow':['🏔️','❄️','❄️'],'marsh':['🌿','🍄','🌱']};
-            backgroundElements.push({
-                x, y: groundY - (Math.random() * 180 * scale + 10),
-                txt: biomes[biome][Math.floor(Math.random()*3)],
-                size: (30 + Math.random() * 40) * scale,
-                v: 0.15 + Math.random() * 0.3
-            });
+            isRunning = true;
+            document.getElementById('death-screen').style.display = 'none';
+            obs = []; decorItems = []; velocityY = 0; jumpCount = 0;
+            speed = canvas.width / 130; startTime = performance.now(); lastTime = performance.now();
+            startMusic(); requestAnimationFrame(update);
         }
 
         function update(now) {
-            if (!isRunning) return;
-            const dt = (now - lastTime) / 16.67;
-            lastTime = now;
+            if(!isRunning) return;
+            const dt = (now - lastTime) / 16.67; lastTime = now;
+            const cur = characters[charIndex];
 
-            ctx.fillStyle = sky; ctx.fillRect(0, 0, canvas.width, groundY);
-            ctx.fillStyle = ground; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
-
-            document.getElementById('chrono').innerText = fmt(now - startTime);
-            speed += 0.0008 * dt * scale;
-
-            if (Math.random() < 0.02) spawnBackground();
-            backgroundElements.forEach((el, i) => {
-                el.x -= speed * el.v * dt;
-                ctx.globalAlpha = 0.3; ctx.font = `${el.size}px serif`;
-                ctx.fillText(el.txt, el.x, el.y);
-                if (el.x < -100) backgroundElements.splice(i, 1);
-            });
+            // DÉCOR FILIGRANE ULTRA
+            ctx.fillStyle = cur.sky; ctx.fillRect(0, 0, canvas.width, groundY);
+            ctx.fillStyle = cur.decor; ctx.globalAlpha = 0.3;
+            // Dessin de collines/montagnes douces en arrière-plan
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            for(let i=0; i<=canvas.width; i+=100) { ctx.lineTo(i, groundY - 100 - Math.sin(i*0.01 + now*0.001)*50); }
+            ctx.lineTo(canvas.width, groundY); ctx.fill();
             ctx.globalAlpha = 1.0;
 
-            let gravity = 0.75 * scale;
-            let jumpForce = -15 * scale;
-            let curGrav = (isPressing && velocityY > 0 && glideEnergy > 0) ? (0.18 * scale) : gravity;
+            ctx.fillStyle = cur.ground; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
-            if (isPressing && velocityY > 0 && glideEnergy > 0) {
-                glideEnergy -= 1.4 * dt;
-            } else if (playerY >= groundY - (60 * scale)) {
-                if(glideEnergy < 100) glideEnergy += 0.5 * dt;
-            }
-            document.getElementById('glide-bar').style.width = glideEnergy + "%";
+            document.getElementById('chrono').innerText = fmt(now - startTime);
+            speed += 0.001 * dt * scale;
+            velocityY += 0.8 * scale * dt; playerY += velocityY * dt;
+            if (playerY > groundY - (65 * scale)) { playerY = groundY - (65 * scale); velocityY = 0; jumpCount = 0; }
 
-            velocityY += curGrav * dt;
-            playerY += velocityY * dt;
-
-            if (playerY > groundY - (55 * scale)) {
-                playerY = groundY - (55 * scale); velocityY = 0; jumpCount = 0;
-            }
-
-            ctx.font = `${60 * scale}px serif`;
-            ctx.fillText(char, canvas.width * 0.12, playerY + (50 * scale));
+            ctx.font = `${70 * scale}px serif`;
+            ctx.fillText(cur.c, canvas.width * 0.15, playerY + (55 * scale));
 
             if (now > nextObs) {
-                obstacles.push({ x: canvas.width });
-                nextObs = now + (1300 + Math.random() * 1100) / (speed/(canvas.width/130));
+                obs.push({ x: canvas.width });
+                nextObs = now + (1100 + Math.random() * 800) / (speed / (canvas.width / 130));
             }
-            obstacles.forEach((obs, i) => {
-                obs.x -= speed * dt;
-                ctx.fillText(pred, obs.x, groundY - 5);
 
-                let pX = canvas.width * 0.12, pSize = 45 * scale;
-                if (Math.abs(obs.x - (pX + pSize/2)) < pSize * 0.7 && playerY > groundY - (90 * scale)) {
-                    gameOver(now - startTime);
-                }
-                if (obs.x < -100) obstacles.splice(i, 1);
+            obs.forEach((o, i) => {
+                o.x -= speed * dt;
+                ctx.fillText(cur.p, o.x, groundY - 10);
+                let hitSize = 45 * scale;
+                if (Math.abs(o.x - (canvas.width * 0.15 + hitSize/2)) < hitSize * 0.7 && playerY > groundY - (100 * scale)) gameOver(now - startTime);
+                if (o.x < -100) obs.splice(i, 1);
             });
-
             requestAnimationFrame(update);
         }
 
-        function gameOver(score) {
-            isRunning = false;
-            document.getElementById('death-msg').innerText = `${nickInput.value}, tu as survécu ${fmt(score)}`;
-            document.getElementById('death-screen').style.display = "flex";
+        function gameOver(s) {
+            isRunning = false; clearInterval(musicInterval);
+            playSound(100, 0.2, 'sawtooth');
+            document.getElementById('msg').innerText = `${nickInput.value || 'Joueur'} : ${fmt(s)}`;
+            document.getElementById('death-screen').style.display = 'flex';
+            menuSel = 0; updateMenuUI();
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
 
-        function inputStart() { if (isRunning && jumpCount < 2) { velocityY = -15 * scale; jumpCount++; } isPressing = true; }
-        function inputEnd() { isPressing = false; }
+        function updateMenuUI() {
+            document.getElementById('btn-retry').classList.toggle('selected', menuSel === 0);
+            document.getElementById('btn-menu').classList.toggle('selected', menuSel === 1);
+        }
 
-        window.addEventListener('keydown', e => { if(e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); inputStart(); } });
-        window.addEventListener('keyup', e => { if(e.code === 'Space' || e.code === 'ArrowUp') inputEnd(); });
-        canvas.addEventListener('touchstart', e => { e.preventDefault(); inputStart(); }, {passive: false});
-        canvas.addEventListener('touchend', inputEnd);
+        function startApp() {
+            if(!nickInput.value.trim()) { alert("Pseudo requis !"); return; }
+            document.getElementById('overlay').style.display = 'none';
+            resetGame();
+        }
+
+        function goBackToMenu() {
+            isRunning = false; clearInterval(musicInterval);
+            document.getElementById('death-screen').style.display = 'none';
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        // CONTROLES SOURIS & CLAVIER UNIFIÉS
+        window.addEventListener('keydown', e => {
+            if (document.getElementById('overlay').style.display !== 'none') {
+                if (e.key === 'ArrowRight') selectChar(charIndex + 1);
+                if (e.key === 'ArrowLeft') selectChar(charIndex - 1);
+                if (e.key === 'Enter') startApp();
+                return;
+            }
+            if (document.getElementById('death-screen').style.display !== 'none') {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { menuSel = 1 - menuSel; updateMenuUI(); }
+                if (e.key === 'Enter') menuSel === 0 ? resetGame() : goBackToMenu();
+                return;
+            }
+            if ((e.code === 'Space' || e.key === 'ArrowUp') && isRunning && jumpCount < 2) {
+                e.preventDefault(); velocityY = -16 * scale; jumpCount++;
+                playSound(440, 0.05, 'triangle');
+            }
+        });
+
+        canvas.addEventListener('touchstart', e => { 
+            if(isRunning && jumpCount < 2) { e.preventDefault(); velocityY = -16 * scale; jumpCount++; playSound(440, 0.05, 'triangle'); }
+        });
+
+        // Gestion de la souris sur le panneau d'échec
+        document.getElementById('btn-retry').onmouseenter = () => { menuSel = 0; updateMenuUI(); };
+        document.getElementById('btn-menu').onmouseenter = () => { menuSel = 1; updateMenuUI(); };
 
         function fmt(t) {
             let m = Math.floor(t/60000), s = Math.floor((t%60000)/1000), ms = Math.floor((t%1000)/10);
